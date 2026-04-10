@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowLite</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════
+       顶部工具栏
+  ══════════════════════════════════ -->
+  <header class="topbar">
+    <span class="brand">⬡ FlowLite</span>
+    <div class="topbar-actions">
+      <span id="clearCanvas" class="tb-btn">清空</span>
+      <span id="exportPNG" class="tb-btn">导出 PNG</span>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════
+       主体：三栏布局
+  ══════════════════════════════════ -->
+  <div class="workspace">
+
+    <!-- 左侧：组件工具栏 -->
+    <aside class="sidebar">
+      <p class="sidebar-title">节点</p>
+      <div class="node-item" draggable="true" data-type="StartNode">
+        <span class="node-icon">▶</span> 开始 / 结束
+      </div>
+      <div class="node-item" draggable="true" data-type="ProcessNode">
+        <span class="node-icon">▣</span> 处理步骤
+      </div>
+      <div class="node-item" draggable="true" data-type="DecisionNode">
+        <span class="node-icon">◈</span> 判断分支
+      </div>
+      <div class="node-item" draggable="true" data-type="IONode">
+        <span class="node-icon">⇌</span> 输入 / 输出
+      </div>
+    </aside>
+
+    <!-- 中间：画布区域 -->
+    <main class="canvas-area" id="canvasArea">
+      <canvas id="mainCanvas"></canvas>
+      <div class="canvas-hint">将节点拖拽到此处开始绘图</div>
+    </main>
+
+    <!-- 右侧：属性面板 -->
+    <aside class="panel">
+      <p class="panel-title">属性</p>
+      <div id="panelEmpty" class="panel-empty">选中节点后显示属性</div>
+      <div id="panelContent" class="panel-content" style="display:none;">
+        <label>文本</label>
+        <input id="propText" type="text" />
+
+        <label>类型</label>
+        <input id="propType" type="text" readonly />
+
+        <label>填充色</label>
+        <div class="color-row">
+          <input id="propColor"    type="color" />
+          <input id="propColorHex" type="text" maxlength="7" placeholder="#000000"/>
+        </div>
+
+        <label>文字色</label>
+        <div class="color-row">
+          <input id="propTextColor"    type="color" />
+          <input id="propTextColorHex" type="text" maxlength="7" placeholder="#ffffff"/>
+        </div>
+
+        <label>位置 X / Y</label>
+        <div class="xy-row">
+          <input id="propX" type="number" />
+          <input id="propY" type="number" />
+        </div>
+
+        <label>宽 / 高</label>
+        <div class="xy-row">
+          <input id="propW" type="number" />
+          <input id="propH" type="number" />
+        </div>
+
+        <button id="deleteNodeBtn" class="btn-danger">删除节点</button>
+      </div>
+    </aside>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/nodes.js"></script>
+  <script src="js/canvas.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>
