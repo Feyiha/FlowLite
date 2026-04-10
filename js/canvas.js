@@ -138,27 +138,10 @@ class FlowCanvas {
     // 窗口缩放时重新适配 canvas 尺寸
     window.addEventListener('resize', () => this._resize());
 
-    // ── 拖拽放置节点 ──────────────────────
-    this.area.addEventListener('dragover', e => e.preventDefault());
-    this.area.addEventListener('drop', e => {
-      e.preventDefault();
-      const type = e.dataTransfer.getData('nodeType');
-      if (!type || !NODE_TYPES[type]) return;
+    // ── 任务 2.2：左侧工具栏拖拽放置 ────────────────────
+    this._bindDrop();
 
-      const rect = this.canvas.getBoundingClientRect();
-      const lp   = this.screenToLogic(
-        e.clientX - rect.left,
-        e.clientY - rect.top
-      );
-      const node = new NODE_TYPES[type](lp.x - 65, lp.y - 26);
-      this.addNode(node);
-      this.selectedNode = node;
-      updatePanel(node);
-
-      document.querySelector('.canvas-hint').style.display = 'none';
-    });
-
-    // ── 鼠标事件 ──────────────────────────
+    // ── 任务 2.3：节点选中与移动 ─────────────────────────
     this.canvas.addEventListener('mousedown',  e => this._onMouseDown(e));
     this.canvas.addEventListener('mousemove',  e => this._onMouseMove(e));
     this.canvas.addEventListener('mouseup',    e => this._onMouseUp(e));
@@ -166,7 +149,7 @@ class FlowCanvas {
       this.hoveredNode = null;
     });
 
-    // ── 滚轮缩放 ──────────────────────────
+    // 滚轮缩放 
     this.canvas.addEventListener('wheel', e => {
       e.preventDefault();
       const rect = this.canvas.getBoundingClientRect();
@@ -177,7 +160,7 @@ class FlowCanvas {
       );
     }, { passive: false });
 
-    // ── 键盘删除 ──────────────────────────
+    // 键盘删除
     window.addEventListener('keydown', e => {
       const tag = document.activeElement.tagName;
       if (
@@ -193,6 +176,42 @@ class FlowCanvas {
     });
   }
 
+  // ────────────────────────────────────────────────────
+  //  任务 2.2 — 拖拽放置节点
+  //
+  // ────────────────────────────────────────────────────
+  _bindDrop() {
+    // 允许拖拽进入
+    this.area.addEventListener('dragover', e => e.preventDefault());
+
+    this.area.addEventListener('drop', e => {
+      e.preventDefault();
+
+      // 读取拖拽携带的节点类型
+      const type = e.dataTransfer.getData('nodeType');
+      if (!type || !NODE_TYPES[type]) return;
+
+      // 屏幕坐标 → 逻辑坐标
+      const rect = this.canvas.getBoundingClientRect();
+      const lp   = this.screenToLogic(
+        e.clientX - rect.left,
+        e.clientY - rect.top
+      );
+
+      // 实例化节点，使节点中心对齐鼠标落点
+      // 默认节点宽约 120~130，高约 44~70，各取中间值估算
+      const node = new NODE_TYPES[type](lp.x - 65, lp.y - 26);
+
+      // 加入画布并选中
+      this.addNode(node);
+      this.selectedNode = node;
+      updatePanel(node);
+
+      // 隐藏画布提示文字
+      document.querySelector('.canvas-hint').style.display = 'none';
+    });
+  }
+
   /** 获取鼠标事件对应的逻辑坐标 */
   _canvasPos(e) {
     const rect = this.canvas.getBoundingClientRect();
@@ -202,15 +221,14 @@ class FlowCanvas {
     );
   }
 
+  // ────────────────────────────────────────────────────
+  //  任务 2.3 — mousedown
+  //
+  // ────────────────────────────────────────────────────
   _onMouseDown(e) {
     // 中键 或 Alt + 左键 → 启动平移
     if (e.button === 1 || (e.button === 0 && e.altKey)) {
-      this.panning  = true;
-      this.panStart = {
-        x: e.clientX - this.offsetX,
-        y: e.clientY - this.offsetY,
-      };
-      this.canvas.style.cursor = 'grabbing';
+      this._startPan(e);
       return;
     }
 
@@ -219,8 +237,16 @@ class FlowCanvas {
     // 检测节点命中（逆序遍历，顶层优先）
     for (const node of [...this.nodes.values()].reverse()) {
       if (node.hitTest(lp.x, lp.y)) {
+        // 选中节点
         this.selectedNode = node;
-        this.dragging     = { node, ox: lp.x - node.x, oy: lp.y - node.y };
+
+        // 记录鼠标相对于节点左上角的偏移，拖拽时保持相对位置不变
+        this.dragging = {
+          node,
+          ox: lp.x - node.x,
+          oy: lp.y - node.y,
+        };
+
         this.canvas.style.cursor = 'move';
         updatePanel(node);
         return;
@@ -230,14 +256,13 @@ class FlowCanvas {
     // 空白处 → 取消选中 + 启动平移
     this.selectedNode = null;
     updatePanel(null);
-    this.panning  = true;
-    this.panStart = {
-      x: e.clientX - this.offsetX,
-      y: e.clientY - this.offsetY,
-    };
-    this.canvas.style.cursor = 'grabbing';
+    this._startPan(e);
   }
 
+  // ────────────────────────────────────────────────────
+  //  任务 2.3 — mousemove
+  //
+  // ────────────────────────────────────────────────────
   _onMouseMove(e) {
     // 平移视口
     if (this.panning && this.panStart) {
@@ -266,7 +291,11 @@ class FlowCanvas {
     this.canvas.style.cursor     = hov ? 'move' : 'default';
   }
 
-  _onMouseUp(e) {
+  // ────────────────────────────────────────────────────
+  //  任务 2.3 — mouseup
+  //  结束拖拽 / 结束平移
+  // ────────────────────────────────────────────────────
+  _onMouseUp() {
     this.canvas.style.cursor = 'default';
 
     if (this.panning) {
@@ -274,9 +303,21 @@ class FlowCanvas {
       this.panStart = null;
       return;
     }
-
+    // 结束节点拖拽
     if (this.dragging) {
       this.dragging = null;
     }
+  }
+
+  // ────────────────────────────────────────────────────
+  //  视口平移
+  // ────────────────────────────────────────────────────
+  _startPan(e) {
+    this.panning  = true;
+    this.panStart = {
+      x: e.clientX - this.offsetX,
+      y: e.clientY - this.offsetY,
+    };
+    this.canvas.style.cursor = 'grabbing';
   }
 }

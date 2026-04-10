@@ -228,3 +228,20 @@ html, body {
 .toast.success           { border-color: var(--green);  color: var(--green); }
 .toast.warn              { border-color: #f0a44e;        color: #f0a44e; }
 .toast.error             { border-color: #f05c5c;        color: #f05c5c; }
+
+/* ── 阶段二新增：拖拽与悬停光标 ─────── */
+
+/* 工具栏拖拽时的抓取光标 */
+.node-item:active {
+  cursor: grabbing;
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  opacity: .85;
+}
+
+/* 拖拽进入画布区域时的视觉提示 */
+.canvas-area.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -4px;
+}
+

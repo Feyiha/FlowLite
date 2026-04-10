@@ -127,3 +127,18 @@ document.getElementById('deleteNodeBtn').onclick = () => {
   updatePanel(null);
   toast('节点已删除');
 };
+
+// ── 画布拖拽进入 / 离开高亮（追加到 main.js 末尾）──
+const canvasArea = document.getElementById('canvasArea');
+canvasArea.addEventListener('dragenter', () =>
+  canvasArea.classList.add('drag-over')
+);
+canvasArea.addEventListener('dragleave', e => {
+  // 只在离开 canvasArea 本身时移除（避免子元素触发误判）
+  if (!canvasArea.contains(e.relatedTarget)) {
+    canvasArea.classList.remove('drag-over');
+  }
+});
+canvasArea.addEventListener('drop', () =>
+  canvasArea.classList.remove('drag-over')
+);
