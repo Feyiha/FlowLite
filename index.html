@@ -10,87 +10,215 @@
 
 <body>
 
-  <!-- ══════════════════════════════════
-       顶部工具栏
-  ══════════════════════════════════ -->
-  <header class="topbar">
-    <span class="brand">⬡ FlowLite</span>
-    <div class="topbar-actions">
-      <span id="clearCanvas" class="tb-btn">清空</span>
-      <span id="exportPNG" class="tb-btn">导出 PNG</span>
+  <header>
+    <div class="logo">
+      ⬡ FlowLite
+    </div>
+    <div class="header-sep"></div>
+
+    <div class="btn-group">
+      <button class="btn" id="saveBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
+        保存
+      </button>
+      <button class="btn" id="openBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+        打开
+      </button>
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+    </div>
+
+    <div class="header-sep"></div>
+    <button class="btn" id="validateBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+      校验
+    </button>
+    <div class="header-spacer"></div>
+
+    <button class="btn" id="clearBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      </svg>
+      清空
+    </button>
+    <button class="btn primary" id="exportBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+      导出 PNG
+    </button>
     </div>
   </header>
 
-  <!-- ══════════════════════════════════
-       主体：三栏布局
-  ══════════════════════════════════ -->
+
   <div class="workspace">
 
     <!-- 左侧：组件工具栏 -->
-    <aside class="sidebar">
-      <p class="sidebar-title">节点</p>
+    <div class="toolbar">
+      <div class="toolbar-section-label">图形元件</div>
+
       <div class="node-item" draggable="true" data-type="StartNode">
-        <span class="node-icon">▶</span> 开始 / 结束
+        <div class="node-icon">
+          <svg width="32" height="22" viewBox="0 0 32 22">
+            <rect x="1" y="1" width="30" height="20" rx="10" fill="none" stroke="#4ef0b8" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div class="node-info">
+          <div class="node-name">开始/结束</div>
+          <div class="node-desc">流程起止点</div>
+        </div>
       </div>
+
       <div class="node-item" draggable="true" data-type="ProcessNode">
-        <span class="node-icon">▣</span> 处理步骤
+        <div class="node-icon">
+          <svg width="32" height="22" viewBox="0 0 32 22">
+            <rect x="1" y="1" width="30" height="20" rx="3" fill="none" stroke="#7c6af7" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div class="node-info">
+          <div class="node-name">处理步骤</div>
+          <div class="node-desc">操作/任务节点</div>
+        </div>
       </div>
+
       <div class="node-item" draggable="true" data-type="DecisionNode">
-        <span class="node-icon">◈</span> 判断分支
+        <div class="node-icon">
+          <svg width="32" height="22" viewBox="0 0 32 22">
+            <polygon points="16,1 31,11 16,21 1,11" fill="none" stroke="#f0a44e" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div class="node-info">
+          <div class="node-name">判断分支</div>
+          <div class="node-desc">条件决策节点</div>
+        </div>
       </div>
+
       <div class="node-item" draggable="true" data-type="IONode">
-        <span class="node-icon">⇌</span> 输入 / 输出
+        <div class="node-icon">
+          <svg width="32" height="22" viewBox="0 0 32 22">
+            <polygon points="5,1 31,1 27,21 1,21" fill="none" stroke="#f05c5c" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div class="node-info">
+          <div class="node-name">输入/输出</div>
+          <div class="node-desc">数据 I/O 节点</div>
+        </div>
       </div>
-    </aside>
+
+      <div class="toolbar-section-label" style="margin-top:8px">提示</div>
+      <div style="padding: 8px 8px; color: var(--text3); font-size: 11px; line-height: 1.7;">
+        · 拖拽图元到画布<br>
+        · 悬停节点显示锚点<br>
+        · 拖拽锚点创建连线<br>
+        · 点击节点编辑属性<br>
+        · Delete 键删除选中
+      </div>
+    </div>
 
     <!-- 中间：画布区域 -->
-    <main class="canvas-area" id="canvasArea">
+    <div class="canvas-area" id="canvasArea">
       <canvas id="mainCanvas"></canvas>
-      <div class="canvas-hint">将节点拖拽到此处开始绘图</div>
-    </main>
+      <div class="canvas-hint">拖拽左侧图元到画布开始建模</div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomOut">?</button>
+        <div class="zoom-label" id="zoomLabel">100%</div>
+        <button class="zoom-btn" id="zoomIn">+</button>
+        <button class="zoom-btn" id="zoomReset" title="重置视图">⊙</button>
+      </div>
+    </div>
 
     <!-- 右侧：属性面板 -->
-    <aside class="panel">
-      <p class="panel-title">属性</p>
-      <div id="panelEmpty" class="panel-empty">选中节点后显示属性</div>
-      <div id="panelContent" class="panel-content" style="display:none;">
-        <label>文本</label>
-        <input id="propText" type="text" />
-
-        <label>类型</label>
-        <input id="propType" type="text" readonly />
-
-        <label>填充色</label>
-        <div class="color-row">
-          <input id="propColor"    type="color" />
-          <input id="propColorHex" type="text" maxlength="7" placeholder="#000000"/>
-        </div>
-
-        <label>文字色</label>
-        <div class="color-row">
-          <input id="propTextColor"    type="color" />
-          <input id="propTextColorHex" type="text" maxlength="7" placeholder="#ffffff"/>
-        </div>
-
-        <label>位置 X / Y</label>
-        <div class="xy-row">
-          <input id="propX" type="number" />
-          <input id="propY" type="number" />
-        </div>
-
-        <label>宽 / 高</label>
-        <div class="xy-row">
-          <input id="propW" type="number" />
-          <input id="propH" type="number" />
-        </div>
-
-        <button id="deleteNodeBtn" class="btn-danger">删除节点</button>
+    <div class="panel" id="panel">
+      <div class="panel-header">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+        </svg>
+        属性面板
       </div>
-    </aside>
+      <div id="panelEmpty" class="panel-empty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          opacity=".3">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M9 9h6M9 12h6M9 15h4" />
+        </svg>
+        <span>选中节点查看<br>并编辑属性</span>
+      </div>
+      <div id="panelContent" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="panel-body">
+          <div class="field-group">
+            <div class="field-label">节点文本</div>
+            <input class="field-input" id="propText" type="text" placeholder="输入节点名称">
+          </div>
+          <div class="field-group">
+            <div class="field-label">节点类型</div>
+            <input class="field-input" id="propType" type="text" readonly style="color:var(--text2)">
+          </div>
+          <div class="panel-section-label">外观</div>
+          <div class="field-group">
+            <div class="field-label">填充颜色</div>
+            <div class="field-row">
+              <input class="color-field" id="propColor" type="color" value="#7c6af7">
+              <input class="field-input" id="propColorHex" type="text" placeholder="#7c6af7" style="flex:1">
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">文字颜色</div>
+            <div class="field-row">
+              <input class="color-field" id="propTextColor" type="color" value="#ffffff">
+              <input class="field-input" id="propTextColorHex" type="text" placeholder="#ffffff" style="flex:1">
+            </div>
+          </div>
+          <div class="panel-section-label">位置与大小</div>
+          <div class="field-row">
+            <div class="field-group" style="flex:1">
+              <div class="field-label">X</div>
+              <input class="field-input" id="propX" type="number" step="1">
+            </div>
+            <div class="field-group" style="flex:1">
+              <div class="field-label">Y</div>
+              <input class="field-input" id="propY" type="number" step="1">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group" style="flex:1">
+              <div class="field-label">宽度</div>
+              <input class="field-input" id="propW" type="number" step="1" min="40">
+            </div>
+            <div class="field-group" style="flex:1">
+              <div class="field-label">高度</div>
+              <input class="field-input" id="propH" type="number" step="1" min="20">
+            </div>
+          </div>
+          <div class="panel-section-label">操作</div>
+          <button class="btn danger" id="deleteNodeBtn"
+            style="width:100%; justify-content:center; margin-top:2px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+            删除此节点
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast"></div>
 
 <script src="js/nodes.js"></script>
 <script src="js/connection.js"></script>   <!-- 新增 -->

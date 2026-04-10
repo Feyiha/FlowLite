@@ -466,4 +466,71 @@ class FlowCanvas {
     };
     this.canvas.style.cursor = 'grabbing';
   }
+
+  // ─────────────────────────────────────
+  //  任务 4.1 序列化 / 反序列化
+  // ─────────────────────────────────────
+  _serialize() {
+    return {
+      nodes: [...this.nodes.values()].map(n => n.toJSON()),
+      edges: this.connections.map(c => c.toJSON()),
+    };
+  }
+
+  _deserialize(data) {
+    this.nodes.clear();
+    this.connections = [];
+
+    for (const nd of data.nodes) {
+      const Cls = NODE_TYPES[nd.type];
+      if (!Cls) continue;
+      const node      = new Cls(nd.x, nd.y, nd.text);
+      node.id         = nd.id;
+      node.width      = nd.width;
+      node.height     = nd.height;
+      node.color      = nd.color;
+      node.textColor  = nd.textColor;
+      this.nodes.set(node.id, node);
+    }
+
+    for (const ed of data.edges) {
+      const c  = new Connection(ed.sourceNodeId, ed.sourceAnchor,
+                                ed.targetNodeId, ed.targetAnchor);
+      c.id     = ed.id;
+      c.label  = ed.label || '';
+      this.connections.push(c);
+    }
+  }
+
+  // ─────────────────────────────────────
+  //  任务 4.2 save和open方法
+  // ─────────────────────────────────────
+  save() {
+    const json = JSON.stringify(this._serialize(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'flowlite-' + Date.now() + '.json';
+    a.click();
+    toast('已保存到本地', 'success');
+  }
+
+  open(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        this._deserialize(data);
+        this.selectedNode = null;
+        this.selectedConn = null;
+        updatePanel(null);
+        this.snapshot();
+        toast('文件加载成功', 'success');
+        document.querySelector('.canvas-hint').style.display = 'none';
+      } catch {
+        toast('文件格式错误', 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
 }

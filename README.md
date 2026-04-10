@@ -35,3 +35,10 @@ FlowLite 是一款基于 **HTML5 Canvas + 原生 JavaScript** 构建的可视化
 - [✅] **动态连线更新** — 节点移动时连线端点实时跟随
 - [✅] **连线选中与删除** — 点击连线高亮，Delete 键删除
 ![alt text](phase3.png)
+
+### 阶段四：数据存储与文件操作
+- [✅] **JSON 序列化** — nodes 数组 + edges 数组的标准结构
+- [✅] **保存 JSON** — 触发浏览器下载 `.json` 文件
+- [✅] **打开 JSON** — 读取本地文件，工厂方法重建所有节点与连线
+![alt text](phase4.png)
+![alt text](phase4-1.png)

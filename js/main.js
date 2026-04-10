@@ -142,3 +142,16 @@ canvasArea.addEventListener('dragleave', e => {
 canvasArea.addEventListener('drop', () =>
   canvasArea.classList.remove('drag-over')
 );
+
+// ────────────────────────────────────────────────────
+//  保存按钮
+// ────────────────────────────────────────────────────
+document.getElementById('saveBtn').onclick     = () => fc.save();
+
+document.getElementById('openBtn').onclick = () =>
+  document.getElementById('fileInput').click();
+
+document.getElementById('fileInput').onchange = e => {
+  if (e.target.files[0]) fc.open(e.target.files[0]);
+  e.target.value = '';
+};
