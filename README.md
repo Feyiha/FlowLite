@@ -74,27 +74,8 @@ cd flowlite
 # 直接用浏览器打开（推荐）
 open index.html
 
-
 > **无需 npm install**，单个 `index.html` 文件包含全部逻辑。
 
----
-
-## 🗂 项目结构
-
----
-flowlite/
-├── index.html
-├── css/
-│   ├── style.css
-├── js/
-│   ├── nodes.js
-│   ├── connection.js
-│   ├── canvas.js
-│   └── main.js
-└── README.md    # 本文档
----
-
----
 
 ## 💾 JSON 数据格式
 
