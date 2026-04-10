@@ -28,9 +28,52 @@ class BaseNode {
     throw new Error(`${this.constructor.name} 必须实现 render(ctx)`);
   }
 
-<<<<<<< HEAD
-}
-=======
+  // ────────────────────────────────────────────────────
+  //  任务 3.1 — 锚点坐标（实时计算）
+  // ────────────────────────────────────────────────────
+  get anchors() {
+    const { x, y, width: w, height: h } = this;
+    return {
+      top:    { x: x + w / 2, y: y         },
+      bottom: { x: x + w / 2, y: y + h     },
+      left:   { x: x,         y: y + h / 2 },
+      right:  { x: x + w,     y: y + h / 2 },
+    };
+  }
+
+  // ────────────────────────────────────────────────────
+  //  任务 3.1 — hitAnchor：检测点是否命中某个锚点
+  // ────────────────────────────────────────────────────
+  hitAnchor(px, py, radius = 10) {
+    for (const [name, pt] of Object.entries(this.anchors)) {
+      if (Math.hypot(px - pt.x, py - pt.y) <= radius) {
+        return name;   // 'top' | 'bottom' | 'left' | 'right'
+      }
+    }
+    return null;
+  }
+
+  // ────────────────────────────────────────────────────
+  //  任务 3.1 — renderAnchors：绘制四个锚点圆点
+  // ────────────────────────────────────────────────────
+  renderAnchors(ctx, isHovered = false) {
+    for (const pt of Object.values(this.anchors)) {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+
+      // 填充色：悬停时更亮
+      ctx.fillStyle = isHovered
+        ? '#4ef0b8'
+        : 'rgba(78, 240, 184, 0.5)';
+      ctx.fill();
+
+      // 描边
+      ctx.strokeStyle = '#0e0f11';
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+    }
+  }
+
 
   /** 任务2.1   在指定区域内居中绘制自动换行文本 */
   drawText(ctx, x, y, w, h) {
@@ -273,4 +316,3 @@ const NODE_TYPES = {
   DecisionNode,
   IONode,
 };
->>>>>>> 1080594 (Phase2)

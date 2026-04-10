@@ -25,3 +25,13 @@ FlowLite 是一款基于 **HTML5 Canvas + 原生 JavaScript** 构建的可视化
 - [✅] **图形选中与移动** — hitTest 碰撞检测 + 拖拽更新坐标
 - [✅] **选中视觉反馈** — 紫色虚线边框 + 四角控制点
 ![alt text](phase2.png)
+
+### 阶段三：连线与拓扑关系
+- [✅] **锚点系统** — Top/Bottom/Left/Right，选中时显示绿色锚点
+- [✅] **Connection 类** — 记录 sourceNodeId/sourceAnchor/targetNodeId/targetAnchor
+- [✅] **贝塞尔曲线连线** — 带方向感知的控制点，自适应曲率
+- [✅] **箭头渲染** — 沿贝塞尔切线方向的填充箭头
+- [✅] **拖拽锚点创建连线** — 临时虚线随鼠标跟随，释放到目标锚点正式建立连接
+- [✅] **动态连线更新** — 节点移动时连线端点实时跟随
+- [✅] **连线选中与删除** — 点击连线高亮，Delete 键删除
+![alt text](phase3.png)

@@ -14,26 +14,31 @@ class FlowCanvas {
     this.area   = area;
     this.ctx    = canvas.getContext('2d');
 
-    // ── 图形对象管理 ──────────────────────
+    // 图形对象管理
     this.nodes = new Map();
+    this.connections = [];
 
-    // ── 选中与悬停状态 ────────────────────
+    // 选中与悬停状态
     this.selectedNode = null;
+    this.selectedConn = null;
     this.hoveredNode  = null;
 
-    // ── 拖拽状态 ──────────────────────────
+    // 拖拽状态
     this.dragging = null;
 
-    // ── 视口变换（平移 + 缩放） ───────────
+    // 视口变换（平移 + 缩放）
     this.scale   = 1;
     this.offsetX = 0;
     this.offsetY = 0;
 
-    // ── 平移状态 ──────────────────────────
+    // 平移状态
     this.panning  = false;
     this.panStart = null;
 
-    // ── 初始化 ────────────────────────────
+    // 连线拖拽状态
+    this.connecting = null;
+
+    // 初始化
     this._resize();
     this._bindEvents();
     this._startLoop();
@@ -87,14 +92,30 @@ class FlowCanvas {
   /** 从画布移除节点 */
   removeNode(node) {
     this.nodes.delete(node.id);
+    // 同时移除与该节点相关的所有连线
+    this.connections = this.connections.filter(
+      c => c.sourceNodeId !== node.id && c.targetNodeId !== node.id
+    );
   }
 
+  /** 添加连线 */
+  addConnection(conn) {
+    const duplicate = this.connections.find(c =>
+      c.sourceNodeId === conn.sourceNodeId &&
+      c.sourceAnchor === conn.sourceAnchor &&
+      c.targetNodeId === conn.targetNodeId &&
+      c.targetAnchor === conn.targetAnchor
+    );
+    if (duplicate) return false;
+    this.connections.push(conn);
+    return true;
+  }
 
   // ═════════════════════════════════════════
   //  3. 重绘机制（requestAnimationFrame 循环）
   // ═════════════════════════════════════════
 
-  /** 任务 1.2 — 启动渲染循环 */
+  /** 任务 1.2  启动渲染循环 */
   _startLoop() {
     const tick = () => {
       this._draw();
@@ -114,20 +135,64 @@ class FlowCanvas {
     ctx.save();
     ctx.translate(this.offsetX, this.offsetY);
     ctx.scale(this.scale, this.scale);
+    
+    // 绘制所有正式连线
+    // 实时获取端点坐标，节点移动时连线自动跟随，无需手动更新。
+    for (const conn of this.connections) {
+      conn.render(ctx, this.nodes, conn === this.selectedConn);
+    }
+
+    // 绘制临时预览连线
+    // 任务 3.3：正在拖拽创建连线时，绘制从源锚点到鼠标的虚线
+    this._drawTempLine(ctx);
 
     // 绘制所有节点
     for (const node of this.nodes.values()) {
-      // 任务 1.3 — 调用 render(ctx) 抽象方法
       node.render(ctx);
 
-      // 选中态高亮
+      // 选中态：虚线框 + 四角控制点
       if (node === this.selectedNode) {
         node.renderSelection(ctx);
+      }
+
+     // 任务 3.1：选中或悬停时显示锚点
+      if (node === this.selectedNode || node === this.hoveredNode) {
+        node.renderAnchors(ctx, node === this.hoveredNode);
       }
     }
 
     ctx.restore();
   }
+
+  // ────────────────────────────────────────────────────
+  //  任务 3.3 — 绘制临时预览线
+  // ────────────────────────────────────────────────────
+  _drawTempLine(ctx) {
+    if (!this.connecting) return;
+
+    const srcNode = this.nodes.get(this.connecting.srcId);
+    if (!srcNode) return;
+
+    const p1 = srcNode.anchors[this.connecting.srcAnchor];
+    const { mx, my } = this.connecting;
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(mx, my);
+
+    ctx.strokeStyle = '#4ef0b8';
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);   // 恢复实线
+
+    // 在鼠标位置绘制小圆点，增强"正在连接"的视觉感
+    ctx.beginPath();
+    ctx.arc(mx, my, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#4ef0b8';
+    ctx.fill();
+  }
+
 
 
   // ═════════════════════════════════════════
@@ -135,10 +200,8 @@ class FlowCanvas {
   // ═════════════════════════════════════════
 
   _bindEvents() {
-    // 窗口缩放时重新适配 canvas 尺寸
+    
     window.addEventListener('resize', () => this._resize());
-
-    // ── 任务 2.2：左侧工具栏拖拽放置 ────────────────────
     this._bindDrop();
 
     // ── 任务 2.3：节点选中与移动 ─────────────────────────
@@ -147,6 +210,8 @@ class FlowCanvas {
     this.canvas.addEventListener('mouseup',    e => this._onMouseUp(e));
     this.canvas.addEventListener('mouseleave', () => {
       this.hoveredNode = null;
+      // 鼠标离开画布时取消连线拖拽，防止状态残留
+      this.connecting  = null;
     });
 
     // 滚轮缩放 
@@ -163,15 +228,24 @@ class FlowCanvas {
     // 键盘删除
     window.addEventListener('keydown', e => {
       const tag = document.activeElement.tagName;
-      if (
-        (e.key === 'Delete' || e.key === 'Backspace') &&
-        !['INPUT', 'TEXTAREA'].includes(tag) &&
-        this.selectedNode
-      ) {
-        this.removeNode(this.selectedNode);
-        this.selectedNode = null;
-        updatePanel(null);
-        toast('节点已删除');
+      if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (this.selectedNode) {
+          this.removeNode(this.selectedNode);
+          this.selectedNode = null;
+          updatePanel(null);
+          toast('节点已删除');
+        } else if (this.selectedConn) {
+          this.connections  = this.connections.filter(c => c !== this.selectedConn);
+          this.selectedConn = null;
+          toast('连线已删除');
+        }
+      }
+
+      // Escape 键取消连线拖拽
+      if (e.key === 'Escape') {
+        this.connecting = null;
       }
     });
   }
@@ -199,12 +273,12 @@ class FlowCanvas {
       );
 
       // 实例化节点，使节点中心对齐鼠标落点
-      // 默认节点宽约 120~130，高约 44~70，各取中间值估算
       const node = new NODE_TYPES[type](lp.x - 65, lp.y - 26);
 
       // 加入画布并选中
       this.addNode(node);
       this.selectedNode = node;
+      this.selectedConn = null;
       updatePanel(node);
 
       // 隐藏画布提示文字
@@ -234,13 +308,27 @@ class FlowCanvas {
 
     const lp = this._canvasPos(e);
 
+    //  检测锚点命中（逆序遍历，顶层优先）
+    for (const node of [...this.nodes.values()].reverse()) {
+      const anchorName = node.hitAnchor(lp.x, lp.y, 10 / this.scale);
+      if (anchorName) {
+        // 开始连线拖拽，记录源节点和源锚点
+        this.connecting = {
+          srcId:     node.id,
+          srcAnchor: anchorName,
+          mx: lp.x,
+          my: lp.y,
+        };
+        return;   // 不进入节点移动逻辑
+      }
+    }
+
     // 检测节点命中（逆序遍历，顶层优先）
     for (const node of [...this.nodes.values()].reverse()) {
       if (node.hitTest(lp.x, lp.y)) {
         // 选中节点
         this.selectedNode = node;
-
-        // 记录鼠标相对于节点左上角的偏移，拖拽时保持相对位置不变
+        this.selectedConn = null;
         this.dragging = {
           node,
           ox: lp.x - node.x,
@@ -253,14 +341,25 @@ class FlowCanvas {
       }
     }
 
+    // 检测连线命中
+    for (const conn of [...this.connections].reverse()) {
+      if (conn.hitTest(lp.x, lp.y, this.nodes, 8 / this.scale)) {
+        this.selectedConn = conn;
+        this.selectedNode = null;
+        updatePanel(null);
+        return;
+      }
+    }
+
     // 空白处 → 取消选中 + 启动平移
     this.selectedNode = null;
+    this.selectedConn = null;
     updatePanel(null);
     this._startPan(e);
   }
 
   // ────────────────────────────────────────────────────
-  //  任务 2.3 — mousemove
+  //  任务 3.3 — mousemove
   //
   // ────────────────────────────────────────────────────
   _onMouseMove(e) {
@@ -272,6 +371,13 @@ class FlowCanvas {
     }
 
     const lp = this._canvasPos(e);
+
+    // 连线拖拽
+    if (this.connecting) {
+      this.connecting.mx = lp.x;
+      this.connecting.my = lp.y;
+      return;
+    }
 
     // 拖拽节点
     if (this.dragging) {
@@ -292,26 +398,66 @@ class FlowCanvas {
   }
 
   // ────────────────────────────────────────────────────
-  //  任务 2.3 — mouseup
+  //  任务 3.3 — mouseup
   //  结束拖拽 / 结束平移
   // ────────────────────────────────────────────────────
-  _onMouseUp() {
+  _onMouseUp(e) {
     this.canvas.style.cursor = 'default';
 
+    // 结束视口平移
     if (this.panning) {
       this.panning  = false;
       this.panStart = null;
       return;
     }
+
     // 结束节点拖拽
     if (this.dragging) {
       this.dragging = null;
+      return;
+    }
+
+    // 结束连线拖拽
+    if (this.connecting) {
+      const lp = this._canvasPos(e);
+      this._tryCreateConnection(lp.x, lp.y);
+      this.connecting = null;
     }
   }
 
+
   // ────────────────────────────────────────────────────
+  //  任务 3.3 — 尝试创建连线
+ // ────────────────────────────────────────────────────
+  _tryCreateConnection(px, py) {
+    // 目标锚点的命中半径略大于源锚点，提升连接成功率
+    const hitRadius = 14 / this.scale;
+
+    for (const node of [...this.nodes.values()].reverse()) {
+      // 不允许自连（源节点和目标节点相同）
+      if (node.id === this.connecting.srcId) continue;
+
+      const anchorName = node.hitAnchor(px, py, hitRadius);
+      if (anchorName) {
+        const conn = new Connection(
+          this.connecting.srcId,
+          this.connecting.srcAnchor,
+          node.id,
+          anchorName
+        );
+
+        if (this.addConnection(conn)) {
+          toast('连线已创建', 'success');
+        } else {
+          toast('连线已存在', 'warn');
+        }
+        return;   // 只连接第一个命中的锚点
+      }
+    }
+    // 未命中任何锚点：静默取消，不提示
+  }
+
   //  视口平移
-  // ────────────────────────────────────────────────────
   _startPan(e) {
     this.panning  = true;
     this.panStart = {
