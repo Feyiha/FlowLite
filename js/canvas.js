@@ -533,4 +533,106 @@ class FlowCanvas {
     };
     reader.readAsText(file);
   }
+
+  // ─────────────────────────────────────
+  //  任务 5.0 清空画布
+  // ─────────────────────────────────────
+  clear() {
+    if (this.nodes.size === 0) return;
+    if (!confirm('确认清空画布？此操作不可撤销。')) return;
+    this.nodes.clear();
+    this.connections  = [];
+    this.selectedNode = null;
+    this.selectedConn = null;
+    this.histIdx      = -1;
+    this.history      = [];
+    this.snapshot();
+    updatePanel(null);
+    document.querySelector('.canvas-hint').style.display = '';
+    toast('画布已清空');
+  }
+
+  // ─────────────────────────────────────
+  //  任务 5.2 校验
+  // ─────────────────────────────────────
+  validate() {
+    if (this.nodes.size === 0) {
+      toast('画布为空，请先添加节点', 'warn');
+      return;
+    }
+
+    const issues = [];
+    const inDeg  = new Map();
+    const outDeg = new Map();
+
+    for (const id of this.nodes.keys()) {
+      inDeg.set(id, 0);
+      outDeg.set(id, 0);
+    }
+    for (const c of this.connections) {
+      outDeg.set(c.sourceNodeId, (outDeg.get(c.sourceNodeId) || 0) + 1);
+      inDeg.set(c.targetNodeId,  (inDeg.get(c.targetNodeId)  || 0) + 1);
+    }
+
+    for (const node of this.nodes.values()) {
+      const i       = inDeg.get(node.id);
+      const o       = outDeg.get(node.id);
+      const isStart = node.type === 'StartNode';
+      if (!isStart && i === 0 && o === 0)
+        issues.push(`"${node.text}" 是孤立节点`);
+      if (node.type === 'DecisionNode' && o < 2)
+        issues.push(`"${node.text}" 判断节点应有至少2条出线`);
+      if (isStart && i > 0)
+        issues.push(`"${node.text}" 开始/结束节点有入线`);
+    }
+
+    if (issues.length === 0) {
+      toast('✓ 流程校验通过，无异常', 'success', 3000);
+    } else {
+      toast('⚠ 发现 ' + issues.length + ' 个问题（见控制台）', 'warn', 4000);
+      console.group('[FlowLite] 校验结果');
+      issues.forEach(i => console.warn(i));
+      console.groupEnd();
+      alert('流程校验问题：\n\n' + issues.join('\n'));
+    }
+  }
+
+  // ─────────────────────────────────────
+  //  任务 5.3 导出图片
+  // ─────────────────────────────────────
+  exportPNG() {
+    const off  = document.createElement('canvas');
+    off.width  = this.canvas.width;
+    off.height = this.canvas.height;
+    const octx = off.getContext('2d');
+
+    // 背景
+    octx.fillStyle = '#0e0f11';
+    octx.fillRect(0, 0, off.width, off.height);
+
+    // 网格
+    octx.strokeStyle = '#1e2126';
+    octx.lineWidth   = 1;
+    const gs = 28 * this.scale;
+    for (let x = this.offsetX % gs; x < off.width;  x += gs) {
+      octx.beginPath(); octx.moveTo(x, 0); octx.lineTo(x, off.height); octx.stroke();
+    }
+    for (let y = this.offsetY % gs; y < off.height; y += gs) {
+      octx.beginPath(); octx.moveTo(0, y); octx.lineTo(off.width, y); octx.stroke();
+    }
+
+    // 内容
+    octx.save();
+    octx.translate(this.offsetX, this.offsetY);
+    octx.scale(this.scale, this.scale);
+    for (const c    of this.connections) c.render(octx, this.nodes, false);
+    for (const node of this.nodes.values()) node.render(octx);
+    octx.restore();
+
+    const a    = document.createElement('a');
+    a.href     = off.toDataURL('image/png');
+    a.download = 'flowlite-export.png';
+    a.click();
+    toast('PNG 已导出', 'success');
+  }
 }

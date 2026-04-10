@@ -60,7 +60,7 @@ document.querySelectorAll('.node-item').forEach(item => {
 });
 
 
-/** 顶部缩放按钮 */
+/** 缩放按钮 */
 document.getElementById('zoomIn').onclick = () =>
   fc.setZoom(fc.scale * 1.2);
 
@@ -144,7 +144,7 @@ canvasArea.addEventListener('drop', () =>
 );
 
 // ────────────────────────────────────────────────────
-//  保存按钮
+//  任务4.2 保存，打开按钮
 // ────────────────────────────────────────────────────
 document.getElementById('saveBtn').onclick     = () => fc.save();
 
@@ -155,3 +155,73 @@ document.getElementById('fileInput').onchange = e => {
   if (e.target.files[0]) fc.open(e.target.files[0]);
   e.target.value = '';
 };
+
+// ────────────────────────────────────────────────────
+//  任务5.3 导出图片
+// ────────────────────────────────────────────────────
+document.getElementById('clearBtn').onclick   = () => fc.clear();
+document.getElementById('exportBtn').onclick   = () => fc.exportPNG();
+document.getElementById('validateBtn').onclick   = () => fc.validate();
+
+// ────────────────────────────────────────────────────
+//  任务5.1 属性编辑
+// ────────────────────────────────────────────────────
+/*节点文本*/
+const propText = document.getElementById('propText');
+propText.addEventListener('input',  () => { if (fc.selectedNode) fc.selectedNode.text = propText.value; });
+propText.addEventListener('change', () => { if (fc.selectedNode) fc.snapshot(); });
+
+/* 填充颜色 */
+const propColor    = document.getElementById('propColor');
+const propColorHex = document.getElementById('propColorHex');
+
+propColor.addEventListener('input', () => {
+  if (fc.selectedNode) {
+    fc.selectedNode.color = propColor.value;
+    propColorHex.value    = propColor.value;
+  }
+});
+propColor.addEventListener('change', () => { if (fc.selectedNode) fc.snapshot(); });
+
+propColorHex.addEventListener('change', () => {
+  const v = propColorHex.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(v) && fc.selectedNode) {
+    fc.selectedNode.color = v;
+    propColor.value       = v;
+    fc.snapshot();
+  }
+});
+
+/* 文字颜色 */
+const propTextColor    = document.getElementById('propTextColor');
+const propTextColorHex = document.getElementById('propTextColorHex');
+
+propTextColor.addEventListener('input', () => {
+  if (fc.selectedNode) {
+    fc.selectedNode.textColor = propTextColor.value;
+    propTextColorHex.value    = propTextColor.value;
+  }
+});
+propTextColor.addEventListener('change', () => { if (fc.selectedNode) fc.snapshot(); });
+
+propTextColorHex.addEventListener('change', () => {
+  const v = propTextColorHex.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(v) && fc.selectedNode) {
+    fc.selectedNode.textColor = v;
+    propTextColor.value       = v;
+    fc.snapshot();
+  }
+});
+
+/* 位置与尺寸 */
+['propX', 'propY', 'propW', 'propH'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (!fc.selectedNode) return;
+    const n  = fc.selectedNode;
+    n.x      =             +document.getElementById('propX').value;
+    n.y      =             +document.getElementById('propY').value;
+    n.width  = Math.max(40, +document.getElementById('propW').value);
+    n.height = Math.max(20, +document.getElementById('propH').value);
+    fc.snapshot();
+  });
+});
