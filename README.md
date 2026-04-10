@@ -64,13 +64,6 @@ FlowLite 是一款基于 **HTML5 Canvas + 原生 JavaScript** 构建的可视化
 
 ---
 
-## 📦 快速开始
-
----bash
-# 克隆或下载项目
-git clone <repo>
-cd flowlite
-
 # 直接用浏览器打开（推荐）
 open index.html
 
